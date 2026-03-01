@@ -5,6 +5,8 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import AddToCartButton from '@/components/AddToCartButton';
 
+export const revalidate = 0; // Force dynamic rendering to always reflect latest DB changes
+
 // Định nghĩa Interface dựa trên cấu trúc SQL (snake_case)
 interface ProductModel {
     id: string;
