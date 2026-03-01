@@ -1,70 +1,56 @@
-'use client';
+'use client'; // Bắt buộc vì có sự kiện onClick và Zustand Store
 
-import React, { useState } from 'react';
-import { ShoppingCart, Check } from 'lucide-react';
+import React from 'react';
 import { useCartStore } from '@/store/useCartStore';
 
-interface AddToCartButtonProps {
+// Cấu trúc Product truyền từ trang chủ xuống
+interface AddToCartProps {
     product: {
         id: string;
         name: string;
-        base_price: number;
+        description: string;
+        basePrice: number; // Đã map từ DB lên Next.js
         unit: string;
-        image_url: string;
+        imageUrl: string;
+        category: string;
     };
 }
 
-/**
- * Client Component for adding items to the Zustand cart store.
- * Provides visual feedback upon successful addition.
- */
-export function AddToCartButton({ product }: AddToCartButtonProps) {
+export default function AddToCartButton({ product }: AddToCartProps) {
+    // Gọi hàm addItem từ Zustand Hash Map (O(1) Time Complexity)
     const addItem = useCartStore((state) => state.addItem);
-    const [isAdded, setIsAdded] = useState(false);
 
-    const handleAdd = (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
+    const handleAddToCart = (e: React.MouseEvent) => {
+        e.preventDefault(); // Ngăn chặn reload trang nếu nút nằm trong thẻ <Link>
 
-        // Mapping snake_case (DB) to camelCase (Zustand Store/Domain Type)
-        addItem({
+        // Transform data map với interface Product trong domain.ts
+        const productForCart = {
             id: product.id,
             name: product.name,
-            basePrice: product.base_price,
+            description: product.description,
+            basePrice: product.basePrice,
             unit: product.unit,
-            imageUrl: product.image_url,
-            description: '', // Optional for cart display
-            stock: 0,
-            category: '',
+            stock: 99, // Giả định kho dồi dào ở Client, kiểm tra thực tế ở Server
+            imageUrl: product.imageUrl,
+            category: product.category,
             metadata: {},
-            createdAt: '',
-            updatedAt: ''
-        });
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+        };
 
-        setIsAdded(true);
-        setTimeout(() => setIsAdded(false), 2000);
+        addItem(productForCart, 1, 'standard');
+
+        // Data Lineage Hook (Phục vụ Tracking)
+        console.log(`[Telemetry] add_to_cart: ${product.name}`);
+        alert(`Đã thêm ${product.name} vào giỏ hàng!`);
     };
 
     return (
         <button
-            onClick={handleAdd}
-            disabled={isAdded}
-            className={`flex items-center justify-center gap-2 px-6 py-3 rounded-full transition-all text-sm font-medium w-full sm:w-auto ${isAdded
-                    ? 'bg-[#4F7942] text-white cursor-default'
-                    : 'bg-[#2D2D2D] text-white hover:bg-[#4F7942] active:scale-95'
-                }`}
+            onClick={handleAddToCart}
+            className="bg-[#2D2D2D] text-white px-6 py-3 rounded-full hover:bg-[#4F7942] transition-colors text-sm font-medium z-10"
         >
-            {isAdded ? (
-                <>
-                    <Check size={18} />
-                    <span>Added!</span>
-                </>
-            ) : (
-                <>
-                    <ShoppingCart size={18} />
-                    <span>Add to Cart</span>
-                </>
-            )}
+            Add to Cart
         </button>
     );
 }

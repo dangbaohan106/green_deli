@@ -3,7 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
-import { AddToCartButton } from '@/components/AddToCartButton';
+import AddToCartButton from '@/components/AddToCartButton';
 
 // Định nghĩa Interface dựa trên cấu trúc SQL (snake_case)
 interface ProductModel {
@@ -104,8 +104,8 @@ export default async function ShopPage({
                                 key={cat}
                                 href={`/shop?category=${cat}`}
                                 className={`px-5 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${selectedCategory === cat
-                                        ? 'bg-[#4F7942] text-white shadow-lg shadow-green-100'
-                                        : 'bg-white border border-gray-100 text-gray-500 hover:border-[#4F7942]'
+                                    ? 'bg-[#4F7942] text-white shadow-lg shadow-green-100'
+                                    : 'bg-white border border-gray-100 text-gray-500 hover:border-[#4F7942]'
                                     }`}
                             >
                                 {cat}
@@ -155,7 +155,18 @@ export default async function ShopPage({
                                 </p>
 
                                 <div className="mt-auto">
-                                    <AddToCartButton product={product} />
+                                    {/* DATA MAPPING CHUẨN XÁC: DB (snake_case) -> Component (camelCase) */}
+                                    <AddToCartButton
+                                        product={{
+                                            id: product.id,
+                                            name: product.name,
+                                            description: product.description,
+                                            basePrice: product.base_price, // Ánh xạ giá
+                                            unit: product.unit,
+                                            imageUrl: product.image_url,   // Ánh xạ hình ảnh
+                                            category: product.category
+                                        }}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -179,8 +190,8 @@ export default async function ShopPage({
                                     key={page}
                                     href={`/shop?page=${page}${selectedCategory !== 'All' ? `&category=${selectedCategory}` : ''}`}
                                     className={`w-12 h-12 rounded-full flex items-center justify-center transition-all font-bold text-sm ${currentPage === page
-                                            ? 'bg-[#2D2D2D] text-white shadow-lg'
-                                            : 'hover:bg-white border border-transparent hover:border-gray-100 text-gray-400'
+                                        ? 'bg-[#2D2D2D] text-white shadow-lg'
+                                        : 'hover:bg-white border border-transparent hover:border-gray-100 text-gray-400'
                                         }`}
                                 >
                                     {page}
