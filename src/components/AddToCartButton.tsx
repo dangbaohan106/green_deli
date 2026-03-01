@@ -1,7 +1,8 @@
-'use client'; // Bắt buộc vì có sự kiện onClick và Zustand Store
+'use client';
 
 import React from 'react';
 import { useCartStore } from '@/store/useCartStore';
+import { useToastStore } from '@/store/useToastStore';
 
 // Cấu trúc Product truyền từ trang chủ xuống
 interface AddToCartProps {
@@ -9,28 +10,31 @@ interface AddToCartProps {
         id: string;
         name: string;
         description: string;
-        basePrice: number; // Đã map từ DB lên Next.js
+        basePrice: number;
         unit: string;
         imageUrl: string;
         category: string;
     };
 }
 
+/**
+ * Client Component for adding items to the cart.
+ * Uses custom toast notifications for feedback.
+ */
 export default function AddToCartButton({ product }: AddToCartProps) {
-    // Gọi hàm addItem từ Zustand Hash Map (O(1) Time Complexity)
     const addItem = useCartStore((state) => state.addItem);
+    const addToast = useToastStore((state) => state.addToast);
 
     const handleAddToCart = (e: React.MouseEvent) => {
-        e.preventDefault(); // Ngăn chặn reload trang nếu nút nằm trong thẻ <Link>
+        e.preventDefault();
 
-        // Transform data map với interface Product trong domain.ts
         const productForCart = {
             id: product.id,
             name: product.name,
             description: product.description,
             basePrice: product.basePrice,
             unit: product.unit,
-            stock: 99, // Giả định kho dồi dào ở Client, kiểm tra thực tế ở Server
+            stock: 99,
             imageUrl: product.imageUrl,
             category: product.category,
             metadata: {},
@@ -40,15 +44,16 @@ export default function AddToCartButton({ product }: AddToCartProps) {
 
         addItem(productForCart, 1, 'standard');
 
-        // Data Lineage Hook (Phục vụ Tracking)
+        // Show custom in-app notification
+        addToast(`Đã thêm ${product.name} vào giỏ hàng!`, 'success');
+
         console.log(`[Telemetry] add_to_cart: ${product.name}`);
-        alert(`Đã thêm ${product.name} vào giỏ hàng!`);
     };
 
     return (
         <button
             onClick={handleAddToCart}
-            className="bg-[#2D2D2D] text-white px-6 py-3 rounded-full hover:bg-[#4F7942] transition-colors text-sm font-medium z-10"
+            className="bg-[#2D2D2D] text-white px-6 py-3 rounded-full hover:bg-[#4F7942] transition-all text-sm font-medium z-10 active:scale-95 duration-200"
         >
             Add to Cart
         </button>
