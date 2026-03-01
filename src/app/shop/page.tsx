@@ -1,5 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 
 // Định nghĩa Interface dựa trên cấu trúc SQL (snake_case)
@@ -13,15 +15,27 @@ interface ProductModel {
     category: string;
 }
 
-export default async function ShopPage() {
-    // 1. Khởi tạo kết nối Supabase tại Server-side
+export default async function ShopPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ page?: string }>;
+}) {
+    // 1. Lấy thông tin phân trang từ URL (Server-side)
+    const params = await searchParams;
+    const itemsPerPage = 8;
+    const currentPage = parseInt(params.page || '1', 10);
+    const from = (currentPage - 1) * itemsPerPage;
+    const to = from + itemsPerPage - 1;
+
+    // 2. Khởi tạo kết nối Supabase tại Server-side
     const supabase = await createClient();
 
-    // 2. Query dữ liệu từ table products (Lấy data trực tiếp, không qua API trung gian)
-    const { data: products, error } = await supabase
+    // 3. Query dữ liệu có phân trang và lấy tổng số lượng sản phẩm
+    const { data: products, error, count } = await supabase
         .from('products')
-        .select('id, name, description, base_price, unit, image_url, category')
-        .order('created_at', { ascending: false });
+        .select('id, name, description, base_price, unit, image_url, category', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(from, to);
 
     if (error) {
         console.error('[DB Fetch Error]:', error.message);
@@ -32,11 +46,25 @@ export default async function ShopPage() {
         );
     }
 
+    const totalPages = Math.ceil((count || 0) / itemsPerPage);
+
     return (
-        <div className="min-h-screen bg-[#FDFDFB] text-[#2D2D2D] font-sans px-8 py-24 lg:px-24">
-            <div className="max-w-7xl mx-auto">
-                {/* Header */}
-                <header className="mb-16">
+        <div className="min-h-screen bg-[#FDFDFB] text-[#2D2D2D] font-sans pb-24">
+            {/* Header Navigation */}
+            <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 px-8 lg:px-24 py-4 mb-16">
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
+                    <Link href="/" className="flex items-center gap-2 text-[#4F7942] hover:text-[#2D2D2D] transition-colors font-medium">
+                        <ArrowLeft size={20} />
+                        <span>Back to Home</span>
+                    </Link>
+                    <div className="text-xl font-serif font-bold tracking-tight">Green Deli Shop</div>
+                    <div className="w-[120px]"></div> {/* Spacer for symmetry */}
+                </div>
+            </header>
+
+            <div className="max-w-7xl mx-auto px-8 lg:px-24">
+                {/* Page Title & Intro */}
+                <header className="mb-12">
                     <h1 className="text-5xl font-serif mb-4">Our Organic Selection</h1>
                     <p className="text-gray-600 max-w-2xl">
                         Browse our curated list of fresh, premium organic produce. Sourced directly from certified farms.
@@ -85,6 +113,42 @@ export default async function ShopPage() {
                         </div>
                     ))}
                 </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                    <div className="mt-20 flex justify-center items-center gap-4">
+                        <Link
+                            href={currentPage > 1 ? `/shop?page=${currentPage - 1}` : '#'}
+                            className={`p-3 rounded-full border border-gray-100 flex items-center justify-center transition-all ${currentPage <= 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-gray-50'
+                                }`}
+                        >
+                            <ChevronLeft size={24} />
+                        </Link>
+
+                        <div className="flex items-center gap-2">
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                <Link
+                                    key={page}
+                                    href={`/shop?page=${page}`}
+                                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-all font-medium ${currentPage === page
+                                            ? 'bg-[#4F7942] text-white'
+                                            : 'hover:bg-gray-50 text-gray-400'
+                                        }`}
+                                >
+                                    {page}
+                                </Link>
+                            ))}
+                        </div>
+
+                        <Link
+                            href={currentPage < totalPages ? `/shop?page=${currentPage + 1}` : '#'}
+                            className={`p-3 rounded-full border border-gray-100 flex items-center justify-center transition-all ${currentPage >= totalPages ? 'opacity-30 cursor-not-allowed' : 'hover:bg-gray-50'
+                                }`}
+                        >
+                            <ChevronRight size={24} />
+                        </Link>
+                    </div>
+                )}
             </div>
         </div>
     );
