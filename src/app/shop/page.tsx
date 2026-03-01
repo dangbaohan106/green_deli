@@ -7,9 +7,9 @@ interface ProductModel {
     id: string;
     name: string;
     description: string;
-    basePrice: number;
+    base_price: number;
     unit: string;
-    imageUrl: string;
+    image_url: string;
     category: string;
 }
 
@@ -20,8 +20,8 @@ export default async function ShopPage() {
     // 2. Query dữ liệu từ table products (Lấy data trực tiếp, không qua API trung gian)
     const { data: products, error } = await supabase
         .from('products')
-        .select('id, name, description, "basePrice", unit, "imageUrl", category')
-        .order('createdAt', { ascending: false });
+        .select('id, name, description, base_price, unit, image_url, category')
+        .order('created_at', { ascending: false });
 
     if (error) {
         console.error('[DB Fetch Error]:', error.message);
@@ -49,9 +49,9 @@ export default async function ShopPage() {
                         <div key={product.id} className="group flex flex-col cursor-pointer border border-gray-100 rounded-2xl overflow-hidden hover:shadow-xl transition-all bg-white">
                             {/* Product Image */}
                             <div className="relative h-64 w-full bg-gray-100 overflow-hidden">
-                                {product.imageUrl ? (
+                                {product.image_url ? (
                                     <Image
-                                        src={product.imageUrl}
+                                        src={product.image_url}
                                         alt={product.name}
                                         fill
                                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -74,7 +74,7 @@ export default async function ShopPage() {
 
                                 <div className="flex items-center justify-between mt-auto">
                                     <div className="flex flex-col">
-                                        <span className="text-2xl font-semibold">${product.basePrice.toFixed(2)}</span>
+                                        <span className="text-2xl font-semibold">${product.base_price.toFixed(2)}</span>
                                         <span className="text-xs text-gray-400">per {product.unit}</span>
                                     </div>
                                     <button className="bg-[#2D2D2D] text-white px-6 py-3 rounded-full hover:bg-[#4F7942] transition-colors text-sm font-medium">

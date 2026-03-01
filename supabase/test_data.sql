@@ -1,73 +1,44 @@
--- Green Deli: ROBUST Database Schema & US Test Data
--- This script safely updates your products table schema and inserts US-localized test data.
+-- Green Deli: SNAKE_CASE Database Schema & US Test Data
+-- This script ensures the products table uses snake_case naming convention 
+-- and populates it with US-localized organic product data.
 
--- 1. DEFENSIVE SCHEMA UPDATE
--- This block ensures all required columns exist with the correct names and case sensitivity.
+-- 1. Create/Adjust Table Schema
+CREATE TABLE IF NOT EXISTS products (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    description TEXT,
+    base_price DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+    unit TEXT NOT NULL DEFAULT 'piece',
+    stock INTEGER DEFAULT 0,
+    image_url TEXT,
+    category TEXT,
+    metadata JSONB DEFAULT '{}',
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Defensive: Add columns if table exists but they are missing (snake_case)
 DO $$ 
 BEGIN 
-    -- 1.1 Create table if it doesn't exist
-    CREATE TABLE IF NOT EXISTS products (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid()
-    );
-
-    -- 1.2 Add 'name' if missing
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='name') THEN
-        ALTER TABLE products ADD COLUMN name TEXT NOT NULL DEFAULT 'Unnamed Product';
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='base_price') THEN
+        ALTER TABLE products ADD COLUMN base_price DECIMAL(12, 2) NOT NULL DEFAULT 0.00;
     END IF;
-
-    -- 1.3 Add 'description' if missing
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='description') THEN
-        ALTER TABLE products ADD COLUMN description TEXT;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='image_url') THEN
+        ALTER TABLE products ADD COLUMN image_url TEXT;
     END IF;
-
-    -- 1.4 Add 'basePrice' if missing (Note: case sensitivity requires double quotes)
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='basePrice') THEN
-        ALTER TABLE products ADD COLUMN "basePrice" DECIMAL(12, 2) NOT NULL DEFAULT 0.00;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='created_at') THEN
+        ALTER TABLE products ADD COLUMN created_at TIMESTAMPTZ DEFAULT now();
     END IF;
-
-    -- 1.5 Add 'unit' if missing
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='unit') THEN
-        ALTER TABLE products ADD COLUMN unit TEXT NOT NULL DEFAULT 'piece';
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='updated_at') THEN
+        ALTER TABLE products ADD COLUMN updated_at TIMESTAMPTZ DEFAULT now();
     END IF;
-
-    -- 1.6 Add 'stock' if missing
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='stock') THEN
-        ALTER TABLE products ADD COLUMN stock INTEGER DEFAULT 0;
-    END IF;
-
-    -- 1.7 Add 'imageUrl' if missing
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='imageUrl') THEN
-        ALTER TABLE products ADD COLUMN "imageUrl" TEXT;
-    END IF;
-
-    -- 1.8 Add 'category' if missing
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='category') THEN
-        ALTER TABLE products ADD COLUMN category TEXT;
-    END IF;
-
-    -- 1.9 Add 'metadata' if missing
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='metadata') THEN
-        ALTER TABLE products ADD COLUMN metadata JSONB DEFAULT '{}';
-    END IF;
-
-    -- 1.10 Add 'createdAt' if missing
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='createdAt') THEN
-        ALTER TABLE products ADD COLUMN "createdAt" TIMESTAMPTZ DEFAULT now();
-    END IF;
-
-    -- 1.11 Add 'updatedAt' if missing
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='updatedAt') THEN
-        ALTER TABLE products ADD COLUMN "updatedAt" TIMESTAMPTZ DEFAULT now();
-    END IF;
-
 END $$;
 
--- 2. CLEAR PREVIOUS TEST DATA (Optional, ensures no duplicates during testing)
+-- 2. Clear previous test data
 -- DELETE FROM products;
 
--- 3. INSERT US-LOCALIZED TEST DATA
--- We use "double quotes" for all camelCase column names to match the application interface.
-INSERT INTO products (id, name, description, "basePrice", unit, stock, "imageUrl", category, metadata, "createdAt", "updatedAt")
+-- 3. Insert US-localized Test Data (snake_case)
+INSERT INTO products (id, name, description, base_price, unit, stock, image_url, category, metadata, created_at, updated_at)
 VALUES 
   -- Leafy Greens
   (gen_random_uuid(), 'California Organic Spinach', 'Crisp, triple-washed baby spinach from Central Valley farms.', 5.99, '1lb bag', 120, 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?auto=format&fit=crop&q=80&w=500', 'Leafy Greens', '{"organic_standard": "USDA", "origin": "California, USA"}', now(), now()),
